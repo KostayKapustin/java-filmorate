@@ -17,7 +17,6 @@ import java.util.Collection;
 @Slf4j
 public class FilmController {
     private final Map<Integer, Film> films = new HashMap<>();
-    private LocalDate data = LocalDate.of(1895, 12, 28);
     private Integer idFilm = 1;
 
     @GetMapping
@@ -26,7 +25,7 @@ public class FilmController {
         return films.values();
     }
     @PostMapping
-    public Film create(@RequestBody Film film) {
+    public Film addFilm(@RequestBody Film film) {
         validation(film);
         film.setId(idFilm);
         films.put(idFilm, film);
@@ -42,12 +41,13 @@ public class FilmController {
         }
         validation(film);
         log.info("Обновляется старый вариант film: {}", films.get(film.getId()));
-        films.remove(film.getId());
         films.put(film.getId(), film);
         log.info("Обновленный вариант film: {}", film);
         return film;
     }
+
     public void validation(Film film) {
+        LocalDate data = LocalDate.of(1895, 12, 28);
         if (film.getName() == null || film.getName().isBlank()) {
             throw new InvalidEmailException("Название фильма не может быть пустым.");
         }

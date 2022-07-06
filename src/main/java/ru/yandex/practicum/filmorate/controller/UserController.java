@@ -28,7 +28,7 @@ public class UserController {
     }
 
     @PostMapping
-    public User create(@RequestBody User user) {
+    public User addUser(@RequestBody User user) {
         validation(user);
         user.setId(idUser);
         users.put(idUser, user);
@@ -44,7 +44,6 @@ public class UserController {
         }
         validation(user);
         log.info("Обновляется старый вариант user: {}", users.get(user.getId()));
-        users.remove(user.getId());
         users.put(user.getId(), user);
         log.info("Обновленный вариант user: {}", user);
         return user;
@@ -61,7 +60,7 @@ public class UserController {
             throw new UserAlreadyExistException("Пользователь с электронной почтой " +
                     user.getEmail() + " уже зарегистрирован.");
         }
-        if(user.getLogin() == null || user.getLogin().isBlank()) {
+        if(user.getLogin().isBlank() || user.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы.");
         }
         if (user.getName() == ""){
