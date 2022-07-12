@@ -2,13 +2,9 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.InvalidEmailException;
-import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-
-import java.time.LocalDate;
+import javax.validation.Valid;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +24,8 @@ public class UserController {
     }
 
     @PostMapping
-    public User addUser(@RequestBody User user) {
-        validation(user);
+    public User create(@Valid @RequestBody User user) {
+        validate(user);
         user.setId(idUser);
         users.put(idUser, user);
         idUser++;
@@ -38,37 +34,24 @@ public class UserController {
     }
 
     @PutMapping
-    public User put(@RequestBody User user) {
+    public User put(@Valid @RequestBody User user) {
         if (!users.containsKey(user.getId())) {
-            throw new ValidationException("Фильм с " + user.getId() + " не найден.");
+            throw new ValidationException("Пользователь с " + user.getId() + " не найден.");
         }
-        validation(user);
+        validate(user);
         log.info("Обновляется старый вариант user: {}", users.get(user.getId()));
         users.put(user.getId(), user);
         log.info("Обновленный вариант user: {}", user);
         return user;
     }
 
-    public void validation(User user) {
-        if(user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new InvalidEmailException("Адрес электронной почты не может быть пустым.");
-        }
-        if (!user.getEmail().contains("@")) {
-            throw new ValidationException("Email должен содержать символ @.");
-        }
-        if(users.containsKey(user.getEmail())) {
-            throw new UserAlreadyExistException("Пользователь с электронной почтой " +
-                    user.getEmail() + " уже зарегистрирован.");
-        }
-        if(user.getLogin().isBlank() || user.getLogin().contains(" ")) {
-            throw new ValidationException("Логин не может быть пустым и содержать пробелы.");
-        }
+    public void validate(User user) {
         if (user.getName() == ""){
             user.setName(user.getLogin());
         }
-        int result = LocalDate.now().compareTo(user.getBirthday());
-        if (result < 0) {
-            throw  new ValidationException("Дата рождения не может быть в будущем.");
-        }
+    }
+
+    public Map<Integer, User> getUsers() {
+        return users;
     }
 }

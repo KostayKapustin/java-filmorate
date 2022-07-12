@@ -1,116 +1,184 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.exception.InvalidEmailException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.hasSize;
 
+import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(controllers = UserController.class)
 class UserControllerTest {
-    private final UserController userController = new UserController();
+    @Autowired
+    MockMvc mockMvc;
+    @Autowired
+    ObjectMapper objectMapper;
+    @Autowired
+    UserController controller;
 
-    @Test
-    @DisplayName("Получение пустого списка всех пользователей.")
-    void findAllNull() {
-        Assertions.assertEquals(0, userController.findAll().size());
+    @BeforeEach
+    void clearingStorage() {
+        controller.getUsers().clear();
     }
 
     @Test
-    @DisplayName("Получение пустого списка всех пользователей.Проверка добавления.")
-    void findAll() {
-        User user = new User(
-                1,
-                "mail@mail.ru",
-                "NickName",
-                "name",
-                LocalDate.of(2000, 10, 10)
-        );
-        userController.addUser(user);
-        Assertions.assertEquals(1, userController.findAll().size());
+    void findAll_shouldReturnEmptyList_thereNoUsersRepository() throws Exception {
+        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
-    @DisplayName("Добавления пользователя без знака<@>.")
-    void addUserWithoutSing() {
-        User user = new User(
-                1,
-                "mailmail.ru",
-                "NickName",
-                "name",
-                LocalDate.of(2000, 10, 10)
-        );
-        Assertions.assertThrows(ValidationException.class, () -> userController.addUser(user));
+    void findAll_shouldReturnCorrectListWithUser_leastOneUserExistsRepository() throws Exception {
+        User user = User.builder()
+                .email("mail@mail.ru")
+                .login("123qwe")
+                .name("mail")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        User user2 = User.builder()
+                .email("mail@mail.ru")
+                .login("123qwe")
+                .name("mail")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        String json = objectMapper.writeValueAsString(user);
+        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
+        String json2 = objectMapper.writeValueAsString(user2);
+        this.mockMvc.perform(post("/users").content(json2).contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[1].name", is("mail")));
     }
 
     @Test
-    @DisplayName("Добавления пользователя без mail.")
-    void addUserNullMail() {
-        User user = new User(
-                1,
-                "",
-                "NickName",
-                "name",
-                LocalDate.of(2000, 10, 10)
-        );
-        Assertions.assertThrows(InvalidEmailException.class, () -> userController.addUser(user));
+    void create_throwsInvalidMail_ExceptionIfAnEmptyMailIsPassed() throws Exception {
+        User user = User.builder()
+                .email("mail/mail.ru")
+                .login("123qwe")
+                .name("mail")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        String json = objectMapper.writeValueAsString(user);
+        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
-    @DisplayName("Добавления пользователя без логина.")
-    void addUserWithoutLogin() {
-        User user = new User(
-                1,
-                "mail@mail.ru",
-                "",
-                "name",
-                LocalDate.of(2000, 10, 10)
-        );
-        Assertions.assertThrows(ValidationException.class, () -> userController.addUser(user));
+    void create_throwsAnInvalidLogin_ExceptionIfAnEmptyLoginIsPassed() throws Exception {
+        User user = User.builder()
+                .email("mail@mail.ru")
+                .login("")
+                .name("mail")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        String json = objectMapper.writeValueAsString(user);
+        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
-    @DisplayName("Добавления пользователя с пробелом в логине.")
-    void addUserWithSpaceLogin() {
-        User user = new User(
-                1,
-                "mail@mail.ru",
-                "Nick    Name",
-                "name",
-                LocalDate.of(2000, 10, 10)
-        );
-        Assertions.assertThrows(ValidationException.class, () -> userController.addUser(user));
+    void create_throwsAnInvalidData_ExceptionIfAnEmptyDataIsPassed() throws Exception {
+        User user = User.builder()
+                .email("mail@mail.ru")
+                .login("123qwe")
+                .name("mail")
+                .birthday(LocalDate.of(3000, 12, 12))
+                .build();
+        String json = objectMapper.writeValueAsString(user);
+        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void create_shouldReturnUserWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception {
+        User user = User.builder()
+                .email("mail@mail.ru")
+                .login("123qwe")
+                .name("mail")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        String json = objectMapper.writeValueAsString(user);
+        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(1)))
+                .andExpect(jsonPath("$[0].email", is("mail@mail.ru")))
+                .andExpect(jsonPath("$[0].birthday", is("" +
+                        LocalDate.of(2000, 12, 12))))
+                .andExpect(jsonPath("$[0].login", is("123qwe")))
+                .andExpect(jsonPath("$[0].name", is("mail")));
+    }
+
+    @Test
+    void put_shouldReturnUserWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception {
+        User user = User.builder()
+                .email("mail@mail.ru")
+                .login("123qwe")
+                .name("mail")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        User user2 = User.builder()
+                .id(3)
+                .email("mail@mail.ru")
+                .login("123qwe123")
+                .name("mail2")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        String json = objectMapper.writeValueAsString(user);
+        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
+        String json2 = objectMapper.writeValueAsString(user2);
+        this.mockMvc.perform(put("/users").content(json2).contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].login", is("123qwe123")))
+                .andExpect(jsonPath("$[0].name", is("mail2")));
     }
 
     @Test
     @DisplayName("Добавления пользователя с пустым именем.")
-    void addUserEmptyName() {
-        User user = new User(
-                1,
-                "mail@mail.ru",
-                "NickName",
-                "",
-                LocalDate.of(2000, 10, 10)
-        );
-        userController.addUser(user);
-        Assertions.assertEquals("NickName", user.getName());
+    void create_throwsAnInvalidExceptionOfTheName_ExceptionIfAnEmptyNameIsPassed() {
+        User user = User.builder()
+                .email("mail@mail.ru")
+                .login("123qwe")
+                .name("")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        controller.create(user);
+        Assertions.assertEquals("123qwe", user.getName());
     }
 
     @Test
-    @DisplayName("Добавления пользователя с датой рожедения в будущем.")
-    void addUserEmptyВateАirthFuture() {
-        User user = new User(
-                1,
-                "mail@mail.ru",
-                "NickName",
-                "",
-                LocalDate.of(3000, 10, 10)
-        );
-        Assertions.assertThrows(ValidationException.class, () -> userController.addUser(user));
+    void put_throwsAnInvalidExceptionForChangingUser_ExceptionIfYouChangeANonExistentUser(){
+        User user = User.builder()
+                .id(1)
+                .email("mail@mail.ru")
+                .login("123qwe")
+                .name("mail")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        Assertions.assertThrows(ValidationException.class, () -> controller.put(user));
     }
 }
