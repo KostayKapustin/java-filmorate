@@ -8,20 +8,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import static org.hamcrest.Matchers.*;
 import java.time.LocalDate;
 
-
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = FilmController.class)
 
 public class FilmControllerTest {
+
     @Autowired
     MockMvc mockMvc;
     @Autowired
@@ -42,7 +45,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    void findAll_shouldReturnCorrectListWithFilms_whenAtLeastOneFilmExistsInStorage() throws Exception {
+    void findAll_shouldReturnCorrectListWithFilms_whenLeastOneFilmExistsInStorage() throws Exception {
         Film film = Film.builder()
                 .name("Май")
                 .description("200")
@@ -66,7 +69,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    void create_throwsInvalidNameException_whenEmptyMovieNamePassed() throws Exception {
+    void create_throwsInvalidNameException_whenEmptyFilmNamePassed() throws Exception {
         Film film = Film.builder()
                 .name("")
                 .description("200")
@@ -74,14 +77,31 @@ public class FilmControllerTest {
                 .duration(100)
                 .build();
         String json = objectMapper.writeValueAsString(film);
-        this.mockMvc.perform(post("/films").content(json).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/films").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+        MvcResult response = this.mockMvc.perform(post("/films")
+                        .content(json).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+        String message = response.getResolvedException().getMessage();
+        assertTrue(message.contains("Название фильма не может быть пустым."));
     }
 
     @Test
-    void create_throwsInvalidDescription_exceptionDescriptionOfMoreThan200CharactersPassed() throws Exception {
+    void create_throwsInvalidNameException_whenEmptyNamePassed() throws Exception {
+        Film film = Film.builder()
+                .name(null)
+                .description("200")
+                .releaseDate(LocalDate.of(2012, 12, 12))
+                .duration(100)
+                .build();
+        String json = objectMapper.writeValueAsString(film);
+        MvcResult response = this.mockMvc.perform(post("/films")
+                        .content(json).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+        String message = response.getResolvedException().getMessage();
+        assertTrue(message.contains("Имя не может равняться null"));
+    }
+
+    @Test
+    void create_throwsInvalidDescriptionException_DescriptionMoreThan200CharactersPassed() throws Exception {
         Film film = Film.builder()
                 .name("Последний богатырь")
                 .description("Главный герой, Иван Найдёнов (Виктор Хориняк) живёт в Москве." +
@@ -93,14 +113,15 @@ public class FilmControllerTest {
                 .duration(100)
                 .build();
         String json = objectMapper.writeValueAsString(film);
-        this.mockMvc.perform(post("/films").content(json).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/films").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+        MvcResult response = this.mockMvc.perform(post("/films")
+                        .content(json).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+        String message = response.getResolvedException().getMessage();
+        assertTrue(message.contains("Описание может сосотоять из максимум 200 симвалов."));
     }
 
     @Test
-    void create_outputsInvalidMovieDurationValue_whenNegative () throws Exception {
+    void create_throwsInvalidExceptionDurationFilm_negativeNumberPassed() throws Exception {
         Film film = Film.builder()
                 .name("Не пустой")
                 .description("200")
@@ -108,14 +129,15 @@ public class FilmControllerTest {
                 .duration(-100)
                 .build();
         String json = objectMapper.writeValueAsString(film);
-        this.mockMvc.perform(post("/films").content(json).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/films").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+        MvcResult response = this.mockMvc.perform(post("/films")
+                        .content(json).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+        String message = response.getResolvedException().getMessage();
+        assertTrue(message.contains("Продолжительность фильма должна быть положительной и не равным текущей дате."));
     }
 
     @Test
-    void create_shouldReturnFilmWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception{
+    void create_notThrowInvalidFilmException_correctFieldsPassed() throws Exception {
         Film film = Film.builder()
                 .name("Не пустой")
                 .description("200")
@@ -123,20 +145,18 @@ public class FilmControllerTest {
                 .duration(100)
                 .build();
         String json = objectMapper.writeValueAsString(film);
-        this.mockMvc.perform(post("/films").content(json).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/films").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post("/films").content(json).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is(1)))
-                .andExpect(jsonPath("$[0].description", is("200")))
-                .andExpect(jsonPath("$[0].releaseDate", is("" +
+                .andExpect(jsonPath("$.id", is(3)))
+                .andExpect(jsonPath("$.description", is("200")))
+                .andExpect(jsonPath("$.releaseDate", is("" +
                         LocalDate.of(2012, 12, 12))))
-                .andExpect(jsonPath("$[0].duration", is(100)))
-                .andExpect(jsonPath("$[0].name", is("Не пустой")));
+                .andExpect(jsonPath("$.duration", is(100)))
+                .andExpect(jsonPath("$.name", is("Не пустой")));
     }
 
     @Test
-    void put_shouldReturnFilmWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception {
+    void update_shouldReturnFilmWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception {
         Film film = Film.builder()
                 .name("Не пустой")
                 .description("200")
@@ -153,12 +173,10 @@ public class FilmControllerTest {
         String json = objectMapper.writeValueAsString(film);
         this.mockMvc.perform(post("/films").content(json).contentType(MediaType.APPLICATION_JSON));
         String json2 = objectMapper.writeValueAsString(film2);
-        this.mockMvc.perform(put("/films").content(json2).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/films").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put("/films").content(json2).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].description", is("200-200")))
-                .andExpect(jsonPath("$[0].name", is("Не пустой 2")));
+                .andExpect(jsonPath("$.description", is("200-200")))
+                .andExpect(jsonPath("$.name", is("Не пустой 2")));
     }
 
     @Test
@@ -173,7 +191,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    void put_throwsAnInvalidExceptionForChangingFilm_ExceptionIfYouChangeANonExistentFilm(){
+    void update_throwsException_whenFilmWithPassedIdNotFound() {
         Film film = Film.builder()
                 .id(1)
                 .name("Не пустой")
@@ -181,6 +199,6 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.of(2012, 12, 12))
                 .duration(100)
                 .build();
-        Assertions.assertThrows(ValidationException.class, () -> controller.put(film));
+        Assertions.assertThrows(ValidationException.class, () -> controller.update(film));
     }
 }

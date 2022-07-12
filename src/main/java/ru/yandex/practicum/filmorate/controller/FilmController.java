@@ -21,7 +21,7 @@ public class FilmController {
 
     @GetMapping
     public Collection<Film> findAll() {
-        log.info("Получен запрос Film.");
+        log.info("Получен запрос Film, возвращающий список фильмов.");
         return films.values();
     }
     @PostMapping
@@ -35,7 +35,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film put(@Valid @RequestBody Film film) {
+    public Film update(@Valid @RequestBody Film film) {
         if (!films.containsKey(film.getId())) {
             throw new ValidationException("Фильм с " + film.getId() + " не найден.");
         }
@@ -48,8 +48,7 @@ public class FilmController {
 
     public void validate(Film film) {
         LocalDate data = LocalDate.of(1895, 12, 28);
-        int result = data.compareTo(film.getReleaseDate());
-        if (result > 0) {
+        if (film.getReleaseDate().isBefore(data)) {
             throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года.");
         }
     }

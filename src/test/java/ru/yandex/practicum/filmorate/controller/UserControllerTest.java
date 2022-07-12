@@ -1,27 +1,30 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.hasSize;
-
 import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = UserController.class)
 class UserControllerTest {
+
     @Autowired
     MockMvc mockMvc;
     @Autowired
@@ -35,14 +38,14 @@ class UserControllerTest {
     }
 
     @Test
-    void findAll_shouldReturnEmptyList_thereNoUsersRepository() throws Exception {
+    void findAll_shouldReturnEmptyList_whenThereAreNoUsersInStorage() throws Exception {
         this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
-    void findAll_shouldReturnCorrectListWithUser_leastOneUserExistsRepository() throws Exception {
+    void findAll_shouldReturnCorrectListWithUsers_whenLeastOneUserExistsInStorage() throws Exception {
         User user = User.builder()
                 .email("mail@mail.ru")
                 .login("123qwe")
@@ -66,7 +69,7 @@ class UserControllerTest {
     }
 
     @Test
-    void create_throwsInvalidMail_ExceptionIfAnEmptyMailIsPassed() throws Exception {
+    void create_throwsInvalidMailException_whenEmptyMailPassed() throws Exception {
         User user = User.builder()
                 .email("mail/mail.ru")
                 .login("123qwe")
@@ -74,14 +77,15 @@ class UserControllerTest {
                 .birthday(LocalDate.of(2000, 12, 12))
                 .build();
         String json = objectMapper.writeValueAsString(user);
-        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+        MvcResult response = this.mockMvc.perform(post("/users")
+                        .content(json).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+        String message = response.getResolvedException().getMessage();
+        assertTrue(message.contains("Некорректо указон Email."));
     }
 
     @Test
-    void create_throwsAnInvalidLogin_ExceptionIfAnEmptyLoginIsPassed() throws Exception {
+    void create_throwsInvalidLoginException_whenTransferringUsernameWithSpace() throws Exception {
         User user = User.builder()
                 .email("mail@mail.ru")
                 .login("")
@@ -89,14 +93,31 @@ class UserControllerTest {
                 .birthday(LocalDate.of(2000, 12, 12))
                 .build();
         String json = objectMapper.writeValueAsString(user);
-        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+        MvcResult response = this.mockMvc.perform(post("/users")
+                        .content(json).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+        String message = response.getResolvedException().getMessage();
+        assertTrue(message.contains("Логин не может содерать пробелы."));
     }
 
     @Test
-    void create_throwsAnInvalidData_ExceptionIfAnEmptyDataIsPassed() throws Exception {
+    void create_throwsInvalidLoginException_whenEmptyLoginPassed() throws Exception {
+        User user = User.builder()
+                .email("mail@mail.ru")
+                .login(null)
+                .name("mail")
+                .birthday(LocalDate.of(2000, 12, 12))
+                .build();
+        String json = objectMapper.writeValueAsString(user);
+        MvcResult response = this.mockMvc.perform(post("/users")
+                        .content(json).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+        String message = response.getResolvedException().getMessage();
+        assertTrue(message.contains("Логин не может быть пустым и равен null."));
+    }
+
+    @Test
+    void create_throwsInvalidDateException_whenEmptyDatePassed() throws Exception {
         User user = User.builder()
                 .email("mail@mail.ru")
                 .login("123qwe")
@@ -104,14 +125,15 @@ class UserControllerTest {
                 .birthday(LocalDate.of(3000, 12, 12))
                 .build();
         String json = objectMapper.writeValueAsString(user);
-        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+        MvcResult response = this.mockMvc.perform(post("/users")
+                        .content(json).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andReturn();
+        String message = response.getResolvedException().getMessage();
+        assertTrue(message.contains("День рождение но может быть в будущем!"));
     }
 
     @Test
-    void create_shouldReturnUserWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception {
+    void create_shouldReturnUserWithTheCorrectData_whenTransmittingCorrectData() throws Exception {
         User user = User.builder()
                 .email("mail@mail.ru")
                 .login("123qwe")
@@ -119,20 +141,18 @@ class UserControllerTest {
                 .birthday(LocalDate.of(2000, 12, 12))
                 .build();
         String json = objectMapper.writeValueAsString(user);
-        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is(1)))
-                .andExpect(jsonPath("$[0].email", is("mail@mail.ru")))
-                .andExpect(jsonPath("$[0].birthday", is("" +
+                .andExpect(jsonPath("$.id", is(4)))
+                .andExpect(jsonPath("$.email", is("mail@mail.ru")))
+                .andExpect(jsonPath("$.birthday", is("" +
                         LocalDate.of(2000, 12, 12))))
-                .andExpect(jsonPath("$[0].login", is("123qwe")))
-                .andExpect(jsonPath("$[0].name", is("mail")));
+                .andExpect(jsonPath("$.login", is("123qwe")))
+                .andExpect(jsonPath("$.name", is("mail")));
     }
 
     @Test
-    void put_shouldReturnUserWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception {
+    void update_shouldReturnUserWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception {
         User user = User.builder()
                 .email("mail@mail.ru")
                 .login("123qwe")
@@ -149,12 +169,10 @@ class UserControllerTest {
         String json = objectMapper.writeValueAsString(user);
         this.mockMvc.perform(post("/users").content(json).contentType(MediaType.APPLICATION_JSON));
         String json2 = objectMapper.writeValueAsString(user2);
-        this.mockMvc.perform(put("/users").content(json2).contentType(MediaType.APPLICATION_JSON));
-        this.mockMvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put("/users").content(json2).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].login", is("123qwe123")))
-                .andExpect(jsonPath("$[0].name", is("mail2")));
+                .andExpect(jsonPath("$.login", is("123qwe123")))
+                .andExpect(jsonPath("$.name", is("mail2")));
     }
 
     @Test
@@ -171,7 +189,7 @@ class UserControllerTest {
     }
 
     @Test
-    void put_throwsAnInvalidExceptionForChangingUser_ExceptionIfYouChangeANonExistentUser(){
+    void update_throwsAnInvalidExceptionForChangingUser_ExceptionIfYouChangeANonExistentUser() {
         User user = User.builder()
                 .id(1)
                 .email("mail@mail.ru")
@@ -179,6 +197,6 @@ class UserControllerTest {
                 .name("mail")
                 .birthday(LocalDate.of(2000, 12, 12))
                 .build();
-        Assertions.assertThrows(ValidationException.class, () -> controller.put(user));
+        Assertions.assertThrows(ValidationException.class, () -> controller.update(user));
     }
 }

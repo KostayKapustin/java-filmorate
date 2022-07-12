@@ -11,14 +11,19 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class Film {
+
     private Integer id;
-    @NotNull(message = "Название фильма не может быть пустым.")
-    @NotBlank
+
+    @NotNull(message = "Имя не может равняться null")
+    @NotBlank(message = "Название фильма не может быть пустым.")
     private String name;
+
     @Size(max = 200, message = "Описание может сосотоять из максимум 200 симвалов.")
     private String description;
+
     private LocalDate releaseDate;
-    @Min(value = 0, message = "Продолжительность фильма должна быть положительной.")
+
+    @DecimalMin(value = "0", message = "Продолжительность фильма должна быть положительной и не равным текущей дате.")
     private Integer duration;
 }
 
