@@ -5,12 +5,15 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import java.time.LocalDate;
 
@@ -21,8 +24,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = FilmController.class)
-
+@AutoConfigureMockMvc
+@SpringBootTest
 public class FilmControllerTest {
 
     @Autowired
@@ -30,11 +33,11 @@ public class FilmControllerTest {
     @Autowired
     ObjectMapper objectMapper;
     @Autowired
-    FilmController controller;
+    InMemoryFilmStorage inMemoryFilmStorage;
 
     @BeforeEach
     void clearingStorage() {
-        controller.getFilms().clear();
+        inMemoryFilmStorage.getFilms().clear();
     }
 
     @Test
@@ -101,7 +104,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    void create_throwsInvalidDescriptionException_DescriptionMoreThan200CharactersPassed() throws Exception {
+    void create_throwsInvalidDescriptionException_descriptionMoreThan200CharactersPassed() throws Exception {
         Film film = Film.builder()
                 .name("Последний богатырь")
                 .description("Главный герой, Иван Найдёнов (Виктор Хориняк) живёт в Москве." +
@@ -121,7 +124,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    void create_throwsInvalidExceptionDurationFilm_negativeNumberPassed() throws Exception {
+    void create_throwsInvalidExceptionDurationFilm_whenNegativeNumberPassed() throws Exception {
         Film film = Film.builder()
                 .name("Не пустой")
                 .description("200")
@@ -137,7 +140,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    void create_notThrowInvalidFilmException_correctFieldsPassed() throws Exception {
+    void create_shouldReturnCorrectFilm_whenCorrectDataPasse() throws Exception {
         Film film = Film.builder()
                 .name("Не пустой")
                 .description("200")
@@ -147,7 +150,7 @@ public class FilmControllerTest {
         String json = objectMapper.writeValueAsString(film);
         this.mockMvc.perform(post("/films").content(json).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(3)))
+                .andExpect(jsonPath("$.id", is(1)))
                 .andExpect(jsonPath("$.description", is("200")))
                 .andExpect(jsonPath("$.releaseDate", is("" +
                         LocalDate.of(2012, 12, 12))))
@@ -156,7 +159,7 @@ public class FilmControllerTest {
     }
 
     @Test
-    void update_shouldReturnFilmWithTheCorrectData_whenTransmittingTheCorrectData() throws Exception {
+    void update_shouldReturnFilmWithTheCorrectData_whenCorrectDataPassed() throws Exception {
         Film film = Film.builder()
                 .name("Не пустой")
                 .description("200")
@@ -187,7 +190,7 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.of(1, 12, 12))
                 .duration(100)
                 .build();
-        Assertions.assertThrows(ValidationException.class, () -> controller.create(film));
+        Assertions.assertThrows(ValidationException.class, () -> inMemoryFilmStorage.create(film));
     }
 
     @Test
@@ -199,6 +202,6 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.of(2012, 12, 12))
                 .duration(100)
                 .build();
-        Assertions.assertThrows(ValidationException.class, () -> controller.update(film));
+        Assertions.assertThrows(ResponseStatusException.class, () -> inMemoryFilmStorage.update(film));
     }
 }

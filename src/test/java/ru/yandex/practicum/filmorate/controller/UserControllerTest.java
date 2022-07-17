@@ -6,12 +6,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
 
@@ -22,7 +24,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = UserController.class)
+@AutoConfigureMockMvc
+@SpringBootTest
 class UserControllerTest {
 
     @Autowired
@@ -30,7 +33,7 @@ class UserControllerTest {
     @Autowired
     ObjectMapper objectMapper;
     @Autowired
-    UserController controller;
+    InMemoryUserStorage controller;
 
     @BeforeEach
     void clearingStorage() {
@@ -69,7 +72,7 @@ class UserControllerTest {
     }
 
     @Test
-    void create_throwsInvalidMailException_whenEmptyMailPassed() throws Exception {
+    void create_throwsInvalidMailException_whenInvalidEmailPassed() throws Exception {
         User user = User.builder()
                 .email("mail/mail.ru")
                 .login("123qwe")
@@ -197,6 +200,6 @@ class UserControllerTest {
                 .name("mail")
                 .birthday(LocalDate.of(2000, 12, 12))
                 .build();
-        Assertions.assertThrows(ValidationException.class, () -> controller.update(user));
+        Assertions.assertThrows(ResponseStatusException.class, () -> controller.update(user));
     }
 }

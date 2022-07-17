@@ -6,6 +6,8 @@ import lombok.Data;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -25,5 +27,9 @@ public class Film {
 
     @DecimalMin(value = "0", message = "Продолжительность фильма должна быть положительной и не равным текущей дате.")
     private Integer duration;
+
+    private final Set<Long> likeList = new HashSet<>();
+
+    private int like;
 }
 
