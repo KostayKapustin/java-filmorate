@@ -33,7 +33,7 @@ public class FilmService {
         if (!existsFilm(filmId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     String.format("Фильма с filmId %d не существует", filmId));
-        if(!existsUser(userId))
+        if(!userStorage.getUsers().containsKey(userId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     String.format("Пользователь с userId %d не существует", userId));
         if (filmStorage.getFilm(filmId).getLikeList().contains((long) userId))
@@ -48,7 +48,7 @@ public class FilmService {
         if (!existsFilm(filmId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     String.format("Фильма с filmId %d не существует", filmId));
-        if(!existsUser(userId))
+        if(!userStorage.getUsers().containsKey(userId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     String.format("Пользователь с userId %d не существует", userId));
         if (filmStorage.getFilm(filmId).getLikeList().contains((long) userId)) {
@@ -91,8 +91,5 @@ public class FilmService {
 
     public boolean existsFilm(int filmId) {
         return filmStorage.getFilms().containsKey(filmId);
-    }
-    public boolean existsUser(int userId) {
-        return userStorage.getUsers().containsKey(userId);
     }
 }

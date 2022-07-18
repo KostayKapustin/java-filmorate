@@ -105,7 +105,6 @@ public class UserService {
         return userStorage.getUser(id);
     }
 
-
     public boolean existsUser(int userId) {
         return userStorage.getUsers().containsKey(userId);
     }
