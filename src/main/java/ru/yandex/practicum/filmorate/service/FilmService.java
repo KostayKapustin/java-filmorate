@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exception.RecurException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -37,7 +38,7 @@ public class FilmService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     String.format("Пользователь с userId %d не существует", userId));
         if (filmStorage.getFilm(filmId).getLikeList().contains((long) userId))
-            throw new ValidationException("Пользователь с " + userId + " уже поставил лайк этому фильму.");
+            throw new RecurException("Пользователь с " + userId + " уже поставил лайк этому фильму.");
         filmStorage.getFilm(filmId).getLikeList().add((long) userId);
         filmStorage.getFilm(filmId).setLike(filmStorage.getFilm(filmId).getLikeList().size());
         log.info("Пользователь {} поставил лайк фильму : {} ."
