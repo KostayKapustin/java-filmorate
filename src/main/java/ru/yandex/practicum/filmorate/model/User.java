@@ -36,4 +36,11 @@ public class User {
 //    @Builder.Default
     private Set<Integer> friends = new HashSet<>();
 
+    public User(Integer id, String login, String email, String name, LocalDate birthday) {
+        this.id = id;
+        this.login = login;
+        this.email = email;
+        this.name = name;
+        this.birthday = birthday;
+    }
 }

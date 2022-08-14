@@ -41,5 +41,12 @@ public class Film {
 
     private Mpa mpa;
 
+    public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.releaseDate = releaseDate;
+        this.duration = duration;
+    }
 }
 
