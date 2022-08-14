@@ -15,7 +15,7 @@ import java.util.Set;
 
 @Data
 @RequiredArgsConstructor
-@Builder
+/*@Builder*/
 public class User {
 
     private Integer id;
@@ -32,6 +32,7 @@ public class User {
     @Past(message = "День рождение но может быть в будущем!")
     private final LocalDate birthday;
 
+    @Builder.Default
     private Set<Integer> friends = new HashSet<>();
 
 }

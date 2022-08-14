@@ -15,7 +15,10 @@
     <description>build top-5 film rating</description>
     <properties>
         <java.version>11</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -26,12 +29,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>31.1-jre</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -62,6 +59,12 @@
             <artifactId>h2</artifactId>
             <version>2.1.212</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

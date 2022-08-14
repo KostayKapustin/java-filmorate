@@ -15,7 +15,7 @@ import java.util.Set;
 
 @Data
 @RequiredArgsConstructor
-@Builder
+/*@Builder*/
 public class Film {
 
     private Integer id;
@@ -32,6 +32,7 @@ public class Film {
     @DecimalMin(value = "0", message = "Продолжительность фильма должна быть положительной и не равным текущей дате.")
     private final Integer duration;
 
+    @Builder.Default
     private Set<Integer> likeList = new HashSet<>();
 
     private int like;
