@@ -13,6 +13,8 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+!**/filmorate.mv.db
+!**/filmorate.trace.db
 
 ### STS ###
 .apt_generated
@@ -41,3 +43,4 @@ build/
 
 ### VS Code ###
 .vscode/
+
