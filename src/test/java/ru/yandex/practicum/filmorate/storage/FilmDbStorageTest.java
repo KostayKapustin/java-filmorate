@@ -51,7 +51,7 @@ class FilmDbStorageTest {
         assertThat(optionalFilm)
                 .isPresent()
                 .hasValueSatisfying(u ->
-                        assertThat(u).hasFieldOrPropertyWithValue("name", "FilmOne"));
+                        assertThat(u).hasFieldOrPropertyWithValue("name", "Film1"));
         filmDbStorage.delete(film.getId());
     }
 
