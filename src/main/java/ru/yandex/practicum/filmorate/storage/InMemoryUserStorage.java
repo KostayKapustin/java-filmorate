@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 @Component
 @Slf4j
+@Qualifier("InMemoryUserStorage")
 public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Integer, User> users = new HashMap<>();
@@ -49,7 +51,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getUser(int id) {
+    public User getUser(Integer id) {
         if (!users.containsKey(id))
             throw new ValidationException("Пользователя с id - " + id + " не существует.");
         log.info("Получен запрос о пользователе {} .", users.get(id));
@@ -60,6 +62,16 @@ public class InMemoryUserStorage implements UserStorage {
     public Map<Integer, User> getUsers() {
         log.info("Получен запрос о всех пользователях.");
         return users;
+    }
+
+    @Override
+    public void delete(Integer id) {
+        users.remove(id);
+    }
+
+    @Override
+    public boolean checkingUser(Integer id) {
+        return false;
     }
 
     public void validate(User user) {

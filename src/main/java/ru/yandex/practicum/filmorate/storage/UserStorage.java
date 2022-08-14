@@ -9,6 +9,10 @@ public interface UserStorage {
     Collection<User> findAll();
     User create(User user);
     User update(User user);
-    User getUser(int id);
+    User getUser(Integer id);
     Map<Integer, User> getUsers();
+
+    void delete(Integer id);
+
+    boolean checkingUser(Integer id);
 }
