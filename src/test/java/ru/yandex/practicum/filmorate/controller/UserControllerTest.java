@@ -1,4 +1,3 @@
-/*
 package ru.yandex.practicum.filmorate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -203,4 +202,4 @@ class UserControllerTest {
                 .build();
         Assertions.assertThrows(ResponseStatusException.class, () -> controller.update(user));
     }
-}*/
+}
