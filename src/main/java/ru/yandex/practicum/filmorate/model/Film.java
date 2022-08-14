@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
@@ -15,7 +13,6 @@ import java.util.Set;
 
 @Data
 @RequiredArgsConstructor
-//@Builder
 public class Film {
 
     private Integer id;
@@ -32,7 +29,6 @@ public class Film {
     @DecimalMin(value = "0", message = "Продолжительность фильма должна быть положительной и не равным текущей дате.")
     private final Integer duration;
 
-//    @Builder.Default
     private Set<Integer> likeList = new HashSet<>();
 
     private int like;
