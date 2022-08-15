@@ -1,19 +1,24 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genres;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
 @Slf4j
+@Qualifier("InMemoryFilmStorage")
 public class InMemoryFilmStorage implements FilmStorage{
 
     private final Map<Integer, Film> films = new HashMap<>();
@@ -49,20 +54,12 @@ public class InMemoryFilmStorage implements FilmStorage{
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(Integer id) {
         if (!films.containsKey(id))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 String.format("Фильм с id %d не найден", id));
         log.info("Удаление фильма: {}", films.get(id));
         films.remove(id);
-    }
-
-    @Override
-    public Film getFilms(int id) {
-        if (!films.containsKey(id))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                String.format("Фильм с id %d не найден", id));
-        return films.get(id);
     }
 
     @Override
@@ -72,7 +69,7 @@ public class InMemoryFilmStorage implements FilmStorage{
     }
 
     @Override
-    public Film getFilm(int id) {
+    public Film getFilm(Integer id) {
         if (films.containsKey(id)) {
             log.info("Получен запрос о фильме {} .", films.get(id));
             return films.get(id);
@@ -80,6 +77,31 @@ public class InMemoryFilmStorage implements FilmStorage{
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     String.format("Фильм с id %d не найден", id));
         }
+    }
+
+    @Override
+    public Genres getGenreById(Integer id) {
+        return null;
+    }
+
+    @Override
+    public Mpa getMpaById(Integer id) {
+        return null;
+    }
+
+    @Override
+    public List<Genres> getAllGenres() {
+        return null;
+    }
+
+    @Override
+    public List<Mpa> getAllMpa() {
+        return null;
+    }
+
+    @Override
+    public boolean checkingFilm(Integer id) {
+        return false;
     }
 
     public void validate(Film film) {

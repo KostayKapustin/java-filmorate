@@ -3,32 +3,35 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Past;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
 
 @Data
-@AllArgsConstructor
-@Builder
+@RequiredArgsConstructor
 public class User {
 
     private Integer id;
 
     @Email(message = "Некорректо указон Email.")
-    private String email;
+    private final String email;
 
     @NotNull(message = "Логин не может быть пустым и равен null.")
     @NotBlank(message = "Логин не может содерать пробелы.")
-    private String login;
+    private final String login;
 
     private String name;
 
     @Past(message = "День рождение но может быть в будущем!")
-    private LocalDate birthday;
+    private final LocalDate birthday;
 
-    private final Set<Integer> friends = new HashSet<>();
+    private Set<Integer> friends = new HashSet<>();
 
 }
